@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Казна</title>
+<meta name="description" content="Личная казна: приход, долги, цели">
+<meta name="theme-color" content="#F2F2F7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Казна">
+<style>
+:root{
+  --bg:#F2F2F7;
+  --surface:#FFFFFF;
+  --ctl:#F2F2F7;          /* контролы внутри белых карточек */
+  --seg:#E9E9EB;          /* подложка сегментед-контрола */
+  --line:#E5E5EA;
+  --line-soft:#EFEFF4;
+  --ink:#0B0B0F;
+  --muted:#6D6D72;
+  --faint:#8A8A8E;
+  --accent:#007AFF;
+  --accent-ink:#FFFFFF;
+  --danger:#FF3B30;
+  --ok:#34C759;
+  --src-oracle:#007AFF;
+  --src-akadem:#FF9500;
+  --src-muzloto:#FF2D55;
+  --src-nashi:#34C759;
+  --r-card:18px;
+  --r-ctl:12px;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --z-sheet:30; --z-toast:40;
+  color-scheme: light;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size:16px; line-height:1.45;
+  min-height:100dvh;
+  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 28px);
+  -webkit-tap-highlight-color: transparent;
+}
+.app{ max-width:480px; margin:0 auto; padding:16px 16px 0; }
+button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+input, select{ font:inherit; color:inherit; }
+.num{ font-variant-numeric: tabular-nums; letter-spacing:-0.01em; }
+
+/* ── Шапка ─────────────────────────────── */
+header.top{ display:flex; align-items:center; justify-content:space-between; margin:6px 2px 16px; }
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand svg{ width:32px; height:32px; }
+.brand h1{ font-size:28px; font-weight:800; letter-spacing:-0.02em; }
+.icon-btn{
+  width:38px; height:38px; border-radius:50%; display:grid; place-items:center;
+  background:var(--surface);
+  box-shadow:0 1px 2px rgba(0,0,0,0.06);
+  transition: transform 120ms var(--ease-out);
+}
+.icon-btn:active{ transform:scale(0.92); }
+.icon-btn svg{ width:18px; height:18px; stroke:var(--muted); }
+
+/* ── Сводка ────────────────────────────── */
+.summary{
+  background:var(--surface); border-radius:var(--r-card);
+  padding:18px 18px 15px; margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+}
+.summary .label{ font-size:13px; color:var(--muted); font-weight:600; }
+.summary .big{ font-size:40px; font-weight:800; letter-spacing:-0.03em; line-height:1.12; margin-top:2px; }
+.summary .sub{ display:flex; justify-content:space-between; align-items:baseline; margin-top:13px; padding-top:13px; border-top:1px solid var(--line-soft); }
+.summary .sub .v{ font-weight:700; font-size:17px; color:var(--accent); cursor:pointer; }
+
+/* ── Кнопки действий ───────────────────── */
+.actions{ display:grid; grid-template-columns:1fr auto; gap:10px; margin-bottom:24px; }
+.btn{
+  border-radius:999px; padding:15px 22px; font-weight:700; font-size:17px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition: transform 120ms var(--ease-out), filter 150ms ease;
+}
+.btn:active{ transform:scale(0.97); }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); box-shadow:0 2px 8px rgba(0,122,255,0.28); }
+.btn-ghost{ background:var(--seg); color:var(--ink); font-size:15.5px; box-shadow:none; }
+.btn[disabled]{ opacity:0.4; pointer-events:none; }
+
+/* ── Секции ────────────────────────────── */
+.section-head{ display:flex; align-items:center; justify-content:space-between; margin:4px 4px 10px; }
+.section-head h2{ font-size:20px; font-weight:800; letter-spacing:-0.02em; }
+.section-head .add{ font-size:15px; font-weight:600; color:var(--accent); padding:6px 8px; border-radius:999px; }
+.section-head .add:active{ opacity:0.6; }
+
+/* ── Карточка цели ─────────────────────── */
+.goal{
+  background:var(--surface); border-radius:var(--r-card);
+  padding:16px; margin-bottom:10px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  transition: transform 120ms var(--ease-out);
+}
+.goal:active{ transform:scale(0.985); }
+.goal .row1{ display:flex; align-items:center; gap:10px; }
+.goal .who{ flex:1; min-width:0; }
+.goal .name{ font-weight:700; font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.goal .kind{ font-size:13px; color:var(--muted); margin-top:1px; }
+.goal .pct{ font-weight:800; font-size:15px; color:var(--muted); }
+.goal.done .pct{ color:var(--ok); }
+.bar{ height:8px; border-radius:999px; background:var(--seg); margin:12px 0 10px; overflow:hidden; }
+.bar i{ display:block; height:100%; border-radius:999px; background:var(--gc, var(--accent));
+  transition: width 600ms var(--ease-out); min-width:0; }
+.goal .row2{ display:flex; justify-content:space-between; align-items:center; }
+.goal .amounts{ font-size:13.5px; color:var(--muted); font-weight:600; white-space:nowrap; }
+.goal .amounts b{ color:var(--ink); font-weight:700; }
+.goal .mini{
+  width:34px; height:34px; border-radius:50%; font-size:19px; font-weight:600; line-height:1;
+  display:grid; place-items:center;
+  background:rgba(0,122,255,0.12); color:var(--accent);
+  transition: transform 120ms var(--ease-out);
+}
+.goal .mini:active{ transform:scale(0.9); }
+.done-tag{ color:var(--ok); font-weight:700; font-size:13.5px; }
+
+/* ── Источники ─────────────────────────── */
+.sources{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 24px; }
+.source{ background:var(--surface); border-radius:14px; padding:10px 6px 9px; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+.source .dot{ width:8px; height:8px; border-radius:50%; margin:0 auto 6px; }
+.source .sname{ font-size:11.5px; color:var(--muted); font-weight:600; }
+.source .sval{ font-size:13px; font-weight:800; margin-top:1px; }
+
+/* ── История ───────────────────────────── */
+.hist{ background:var(--surface); border-radius:var(--r-card); padding:2px 14px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+.op{ display:flex; gap:12px; padding:13px 0; border-bottom:1px solid var(--line-soft); }
+.op:last-child{ border-bottom:0; }
+.op .ic{ width:36px; height:36px; border-radius:12px; display:grid; place-items:center; flex:none; background:var(--ctl); font-size:15px; }
+.op .body{ flex:1; min-width:0; }
+.op .t1{ display:flex; justify-content:space-between; gap:10px; font-weight:600; font-size:15px; }
+.op .t1 .amt{ font-weight:700; }
+.op .t1 .amt.plus{ color:var(--ok); }
+.op .t1 .amt.minus{ color:var(--ink); }
+.op .t2{ font-size:13px; color:var(--faint); margin-top:1px; }
+.op .t3{ font-size:12.5px; color:var(--muted); margin-top:3px; line-height:1.5; }
+.op .del{ align-self:center; color:#C7C7CC; font-size:12px; padding:8px; flex:none; }
+.empty{
+  text-align:center; color:var(--muted); padding:34px 20px; font-size:14.5px;
+  background:var(--surface); border-radius:var(--r-card); box-shadow:0 1px 2px rgba(0,0,0,0.04);
+}
+.empty b{ color:var(--ink); }
+
+/* ── Sheet (dialog) ────────────────────── */
+dialog.sheet{
+  position:fixed; inset:auto 0 0 0; width:100%; max-width:480px; margin:0 auto;
+  border:0; border-radius:22px 22px 0 0; background:var(--surface); color:var(--ink);
+  padding:10px 18px calc(env(safe-area-inset-bottom) + 18px);
+  max-height:92dvh; overflow-y:auto; z-index:var(--z-sheet);
+  box-shadow:0 -8px 40px rgba(0,0,0,0.12);
+}
+dialog.sheet::backdrop{ background:rgba(0,0,0,0.35); }
+dialog.sheet[open]{ animation: rise 360ms var(--ease-drawer); }
+@keyframes rise{ from{ transform:translateY(48px); opacity:0.5; } to{ transform:none; opacity:1; } }
+.grab{ width:36px; height:5px; border-radius:3px; background:#D1D1D6; margin:4px auto 14px; }
+.sheet h3{ font-size:20px; font-weight:800; letter-spacing:-0.02em; margin-bottom:14px; }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+.field input[type=text], .field input[type=number], .field select{
+  width:100%; background:var(--ctl); border:1px solid transparent; border-radius:var(--r-ctl);
+  padding:13px 14px; font-size:17px; font-weight:600; outline:none; -webkit-appearance:none; appearance:none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.field input:focus, .field select:focus{ border-color:var(--accent); background:var(--surface); }
+.field .help{ font-size:12.5px; color:var(--faint); margin-top:5px; }
+.field .err{ font-size:12.5px; color:var(--danger); margin-top:5px; font-weight:600; }
+.amount-wrap{ display:grid; grid-template-columns:1fr 112px; gap:8px; }
+.amount-wrap select{ text-align:center; font-weight:700; }
+
+/* сегментед-контрол (iOS) */
+.seg{ display:grid; gap:2px; background:var(--seg); border-radius:10px; padding:2px; }
+.seg.c2{ grid-template-columns:1fr 1fr; } .seg.c3{ grid-template-columns:1fr 1fr 1fr; }
+.seg button{
+  padding:9px 6px; border-radius:8px; font-weight:600; font-size:14.5px; color:var(--ink);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+.seg button.on{ background:var(--surface); box-shadow:0 1px 4px rgba(0,0,0,0.12); font-weight:700; }
+
+/* выбор направления (чипы 2×2) */
+.choice{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.choice button{
+  padding:11px 6px; border-radius:var(--r-ctl); background:var(--ctl); border:1.5px solid transparent;
+  font-weight:600; font-size:14.5px; color:var(--muted);
+  transition: transform 120ms var(--ease-out), border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+.choice button:active{ transform:scale(0.97); }
+.choice button.on{ border-color:var(--sc, var(--accent)); color:var(--ink); background:color-mix(in srgb, var(--sc, var(--accent)) 10%, #FFFFFF); font-weight:700; }
+
+/* распределение */
+.alloc{ border:1px solid var(--line); border-radius:var(--r-card); padding:4px 14px; margin-bottom:12px; }
+.alloc-row{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line-soft); }
+.alloc-row:last-child{ border-bottom:0; }
+.alloc-row .an{ font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alloc-row .ah{ font-size:12px; color:var(--faint); font-weight:500; }
+.field .alloc-row input[type=text]{
+  width:106px; flex:none; text-align:right; background:var(--ctl); border:1px solid transparent;
+  border-radius:10px; padding:9px 10px; font-size:15.5px; font-weight:700; outline:none;
+}
+.field .alloc-row input[type=text]:focus{ border-color:var(--accent); background:var(--surface); }
+.rest{
+  display:flex; justify-content:space-between; align-items:center; font-weight:600;
+  padding:12px 2px 2px; font-size:15.5px;
+}
+.rest .rv{ font-size:18px; font-weight:800; }
+.rest.neg .rv{ color:var(--danger); }
+.sheet .btn{ width:100%; margin-top:10px; }
+.sheet .danger-link{ display:block; width:100%; text-align:center; color:var(--danger); font-weight:600; font-size:15px; padding:14px 0 2px; }
+.rates-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+/* ── Toast ─────────────────────────────── */
+#toast{
+  position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px); transform:translateX(-50%) translateY(16px);
+  background:#1C1C1E; color:#fff; font-weight:600; font-size:14.5px;
+  padding:11px 20px; border-radius:999px; opacity:0; pointer-events:none;
+  transition: opacity 220ms ease, transform 320ms var(--ease-out); z-index:var(--z-toast);
+  max-width:88vw; text-align:center; box-shadow:0 6px 24px rgba(0,0,0,0.2);
+}
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+}
+@media (min-width: 700px){
+  .app{ max-width:560px; padding-top:34px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="15" fill="#007AFF"/><path d="M18 42 V32 M27.5 42 V24 M37 42 V29 M46.5 42 V20" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg>
+      <h1>Казна</h1>
+    </div>
+    <button class="icon-btn" id="btnSettings" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z"/></svg>
+    </button>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btnIncome">＋ Приход</button>
+    <button class="btn btn-ghost" id="btnExpense">− Расход</button>
+  </div>
+
+  <div class="section-head">
+    <h2>Долги и цели</h2>
+    <button class="add" id="btnAddGoal">＋ Добавить</button>
+  </div>
+  <div id="goals" style="margin-bottom:24px;"></div>
+
+  <div class="section-head">
+    <h2>Направления</h2>
+  </div>
+  <div class="sources" id="sources"></div>
+
+  <div class="section-head">
+    <h2>История</h2>
+  </div>
+  <div id="history"></div>
+
+</div>
+
+<dialog class="sheet" id="shIncome"></dialog>
+<dialog class="sheet" id="shGoal"></dialog>
+<dialog class="sheet" id="shTopup"></dialog>
+<dialog class="sheet" id="shExpense"></dialog>
+<dialog class="sheet" id="shSettings"></dialog>
+<dialog class="sheet" id="shBudget"></dialog>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ───────────────────────── данные ───────────────────────── */
+const LS_KEY = "kazna_v2";
+const CURS = ["THB","RUB","USDT"];
+const CUR_SYM = { THB:"฿", RUB:"₽", USDT:"USDT" };
+const SOURCES = [
+  { id:"oracle",  name:"Oracle",   color:"var(--src-oracle)"  },
+  { id:"akadem",  name:"Академия", color:"var(--src-akadem)"  },
+  { id:"muzloto", name:"Музлото",  color:"var(--src-muzloto)" },
+  { id:"nashi",   name:"Все Наши", color:"var(--src-nashi)"   },
+];
+const GOAL_COLORS = ["#007AFF","#34C759","#FF9500","#FF2D55","#5856D6"];
+
+let state = load();
+function defaults(){
+  return {
+    main: "THB",
+    rates: { THB: 36, RUB: 90 },           // за 1 USDT
+    budget: 0,
+    personal: 0,                            // в main
+    goals: [{
+      id:"roman", name:"Роман Казакевич", type:"debt", cur:"RUB",
+      target: 100000, saved: 0, color:"#007AFF", createdAt: Date.now()
+    }],
+    ops: []
+  };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return defaults();
+    const s = JSON.parse(raw);
+    return Object.assign(defaults(), s);
+  }catch(e){ return defaults(); }
+}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id"+Date.now()+Math.random().toString(36).slice(2));
+
+/* ─────────────────────── валюта/формат ──────────────────── */
+function conv(amount, from, to){
+  if(from === to) return amount;
+  const inU = from === "USDT" ? amount : amount / state.rates[from];
+  return to === "USDT" ? inU : inU * state.rates[to];
+}
+const nf = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+function fmt(n, cur){
+  const f = (cur === "USDT" && Math.abs(n) < 1000 ? nf2 : nf).format(cur === "USDT" ? Math.round(n*100)/100 : Math.round(n));
+  return cur === "USDT" ? f + " USDT" : f + " " + CUR_SYM[cur];
+}
+function parseNum(v){
+  const n = parseFloat(String(v).replace(",", ".").replace(/\s/g, ""));
+  return isFinite(n) && n > 0 ? n : 0;
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const srcOf = id => SOURCES.find(s => s.id === id) || SOURCES[0];
+const goalOf = id => state.goals.find(g => g.id === id);
+const remaining = g => Math.max(0, g.target - g.saved);
+
+/* ─────────────────────── рендер ─────────────────────────── */
+function render(){
+  renderSummary(); renderGoals(); renderSources(); renderHistory(); save();
+}
+
+function renderSummary(){
+  const el = document.getElementById("summary");
+  el.innerHTML = `
+    <div class="label">Остаток на личные расходы</div>
+    <div class="big num">${fmt(state.personal, state.main)}</div>
+    <div class="sub">
+      <span class="label">Бюджет на месяц</span>
+      <span class="v num" id="editBudget">${state.budget > 0 ? fmt(state.budget, state.main) : "Указать"}</span>
+    </div>`;
+  el.querySelector("#editBudget").onclick = openBudget;
+}
+
+function renderGoals(){
+  const wrap = document.getElementById("goals");
+  if(!state.goals.length){
+    wrap.innerHTML = `<div class="empty"><b>Пока пусто.</b><br>Добавь долг или задачу — и распределяй приход по ним.</div>`;
+    return;
+  }
+  wrap.innerHTML = state.goals.map(g => {
+    const pct = g.target > 0 ? Math.min(100, g.saved / g.target * 100) : 0;
+    const done = g.saved >= g.target && g.target > 0;
+    return `
+    <article class="goal ${done ? "done" : ""}" data-id="${g.id}">
+      <div class="row1">
+        <div class="who">
+          <div class="name">${esc(g.name)}</div>
+          <div class="kind">${g.type === "debt" ? "Долг" : "Задача"} · ${g.cur}</div>
+        </div>
+        <div class="pct num">${done ? "✓ 100%" : Math.floor(pct) + "%"}</div>
+      </div>
+      <div class="bar"><i style="width:${pct}%; --gc:${g.color}"></i></div>
+      <div class="row2">
+        <div class="amounts num"><b>${fmt(g.saved, g.cur)}</b> из ${fmt(g.target, g.cur)}${done ? "" : " · осталось " + fmt(remaining(g), g.cur)}</div>
+        ${done ? `<span class="done-tag">Закрыто</span>` : `<button class="mini" data-topup="${g.id}">＋</button>`}
+      </div>
+    </article>`;
+  }).join("");
+  wrap.querySelectorAll("[data-topup]").forEach(b => b.onclick = e => { e.stopPropagation(); openTopup(b.dataset.topup); });
+  wrap.querySelectorAll(".goal").forEach(card => card.onclick = () => openGoal(card.dataset.id));
+}
+
+function renderSources(){
+  const totals = {};
+  SOURCES.forEach(s => totals[s.id] = 0);
+  state.ops.forEach(op => {
+    if(op.type === "income") totals[op.source] = (totals[op.source] || 0) + conv(op.amount, op.cur, state.main);
+  });
+  document.getElementById("sources").innerHTML = SOURCES.map(s => `
+    <div class="source">
+      <div class="dot" style="background:${s.color}"></div>
+      <div class="sname">${s.name}</div>
+      <div class="sval num">${fmt(totals[s.id], state.main)}</div>
+    </div>`).join("");
+}
+
+function renderHistory(){
+  const wrap = document.getElementById("history");
+  if(!state.ops.length){
+    wrap.innerHTML = `<div class="empty">Операций пока нет. Жми <b>«＋ Приход»</b>, когда придут деньги.</div>`;
+    return;
+  }
+  const dtf = new Intl.DateTimeFormat("ru-RU", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+  const rows = state.ops.slice().reverse().map(op => {
+    const when = dtf.format(new Date(op.ts));
+    if(op.type === "income"){
+      const s = srcOf(op.source);
+      const lines = op.allocs.filter(a => a.amount > 0).map(a => {
+        const g = goalOf(a.goalId);
+        return `→ ${esc(g ? g.name : "цель")}: ${fmt(a.amount, op.cur)}${a.goalCur !== op.cur ? " ≈ " + fmt(a.credited, a.goalCur) : ""}`;
+      });
+      if(op.personalAdded > 0) lines.push(`→ личные: ${fmt(op.personalAdded, state.main)}`);
+      return opRow(op.id, "💸", `Приход · ${s.name}`, when, `+${fmt(op.amount, op.cur)}`, "plus", lines.join("<br>"));
+    }
+    if(op.type === "expense"){
+      return opRow(op.id, "🧾", esc(op.note || "Личные расходы"), when, `−${fmt(op.amount, state.main)}`, "minus", "");
+    }
+    if(op.type === "topup"){
+      const g = goalOf(op.goalId);
+      return opRow(op.id, "🎯", `Пополнение · ${esc(g ? g.name : "цель")}`, when, `+${fmt(op.amount, op.goalCur)}`, "plus", "");
+    }
+    return "";
+  }).join("");
+  wrap.innerHTML = `<div class="hist">${rows}</div>`;
+  wrap.querySelectorAll("[data-del]").forEach(b => b.onclick = () => deleteOp(b.dataset.del));
+}
+function opRow(id, ic, title, when, amt, cls, extra){
+  return `<div class="op">
+    <div class="ic">${ic}</div>
+    <div class="body">
+      <div class="t1"><span>${title}</span><span class="amt num ${cls}">${amt}</span></div>
+      <div class="t2">${when}</div>
+      ${extra ? `<div class="t3 num">${extra}</div>` : ""}
+    </div>
+    <button class="del" data-del="${id}" aria-label="Удалить">✕</button>
+  </div>`;
+}
+
+/* ─────────────────── sheet: приход ──────────────────────── */
+const shIncome = document.getElementById("shIncome");
+let inc = null;
+
+function openIncome(){
+  inc = { amount: 0, cur: state.main, source: "oracle", allocs: {} };
+  drawIncome();
+  shIncome.showModal();
+}
+function drawIncome(){
+  const active = state.goals.filter(g => remaining(g) > 0);
+  shIncome.innerHTML = `
+    <div class="grab"></div>
+    <h3>Приход</h3>
+    <div class="field">
+      <label>Сумма</label>
+      <div class="amount-wrap">
+        <input type="text" inputmode="decimal" id="incAmt" placeholder="0" autocomplete="off">
+        <select id="incCur">${CURS.map(c => `<option ${c===inc.cur?"selected":""}>${c}</option>`).join("")}</select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Направление</label>
+      <div class="choice" id="incSrc">
+        ${SOURCES.map(s => `<button type="button" data-src="${s.id}" style="--sc:${s.color}" class="${inc.source===s.id?"on":""}">${s.name}</button>`).join("")}
+      </div>
+    </div>
+    <div class="field">
+      <label>Распределить</label>
+      <div class="alloc" id="incAlloc">
+        ${active.length ? active.map(g => `
+          <div class="alloc-row">
+            <div style="flex:1;min-width:0">
+              <div class="an">${esc(g.name)}</div>
+              <div class="ah num" id="hint-${g.id}"></div>
+            </div>
+            <input type="text" inputmode="decimal" data-goal="${g.id}" placeholder="0" autocomplete="off">
+          </div>`).join("")
+        : `<div style="padding:12px 0;color:var(--faint);font-size:13.5px">Все цели закрыты — весь приход пойдёт в личные.</div>`}
+      </div>
+    </div>
+    <div class="rest" id="incRest"></div>
+    <button class="btn btn-primary" id="incSave">Зачислить</button>`;
+
+  const amtEl = shIncome.querySelector("#incAmt");
+  amtEl.oninput = () => { inc.amount = parseNum(amtEl.value); updateIncome(); };
+  shIncome.querySelector("#incCur").onchange = e => { inc.cur = e.target.value; updateIncome(); };
+  shIncome.querySelectorAll("#incSrc button").forEach(b => b.onclick = () => {
+    inc.source = b.dataset.src;
+    shIncome.querySelectorAll("#incSrc button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  shIncome.querySelectorAll("[data-goal]").forEach(el => el.oninput = () => {
+    inc.allocs[el.dataset.goal] = parseNum(el.value);
+    updateIncome();
+  });
+  shIncome.querySelector("#incSave").onclick = commitIncome;
+  setTimeout(() => amtEl.focus(), 60);
+  updateIncome();
+}
+function updateIncome(){
+  let used = 0;
+  state.goals.forEach(g => {
+    const a = inc.allocs[g.id] || 0;
+    used += a;
+    const hint = shIncome.querySelector("#hint-" + CSS.escape(g.id));
+    if(hint){
+      if(a > 0 && g.cur !== inc.cur) hint.textContent = "≈ " + fmt(conv(a, inc.cur, g.cur), g.cur);
+      else hint.textContent = "осталось " + fmt(remaining(g), g.cur);
+    }
+  });
+  const rest = inc.amount - used;
+  const restMain = conv(Math.max(0, rest), inc.cur, state.main);
+  const el = shIncome.querySelector("#incRest");
+  el.classList.toggle("neg", rest < -0.004);
+  el.innerHTML = rest < -0.004
+    ? `<span>Распределено больше прихода</span><span class="rv num">−${fmt(Math.abs(rest), inc.cur)}</span>`
+    : `<span>На личные</span><span class="rv num">${fmt(rest, inc.cur)}${inc.cur !== state.main ? ` <span style="color:var(--faint);font-size:13px">≈ ${fmt(restMain, state.main)}</span>` : ""}</span>`;
+  shIncome.querySelector("#incSave").disabled = !(inc.amount > 0) || rest < -0.004;
+}
+function commitIncome(){
+  const allocs = [];
+  state.goals.forEach(g => {
+    let a = Math.min(inc.allocs[g.id] || 0, conv(remaining(g), g.cur, inc.cur));
+    if(a <= 0) return;
+    const credited = conv(a, inc.cur, g.cur);
+    g.saved = Math.min(g.target, g.saved + credited);
+    allocs.push({ goalId: g.id, amount: a, credited, goalCur: g.cur });
+  });
+  const used = allocs.reduce((s, a) => s + a.amount, 0);
+  const personalAdded = conv(Math.max(0, inc.amount - used), inc.cur, state.main);
+  state.personal += personalAdded;
+  state.ops.push({ id: uid(), ts: Date.now(), type: "income", amount: inc.amount, cur: inc.cur, source: inc.source, allocs, personalAdded });
+  shIncome.close();
+  const doneNow = state.goals.filter(g => g.target > 0 && g.saved >= g.target && allocs.some(a => a.goalId === g.id));
+  toast(doneNow.length ? `🎉 ${esc(doneNow[0].name)} — закрыто!` : "Приход зачислен");
+  render();
+}
+
+/* ─────────────── sheet: цель (добавить/править) ─────────── */
+const shGoal = document.getElementById("shGoal");
+function openGoal(id){
+  const g = id ? goalOf(id) : null;
+  const cur = g ? g.cur : state.main;
+  shGoal.innerHTML = `
+    <div class="grab"></div>
+    <h3>${g ? "Изменить" : "Новый долг / задача"}</h3>
+    <div class="field">
+      <label>Название (человек или задача)</label>
+      <input type="text" id="gName" placeholder="Например: Аренда студии" value="${g ? esc(g.name) : ""}">
+    </div>
+    <div class="field">
+      <label>Тип</label>
+      <div class="seg c2" id="gType">
+        <button type="button" data-t="debt" class="${!g || g.type==="debt" ? "on" : ""}">Долг</button>
+        <button type="button" data-t="task" class="${g && g.type==="task" ? "on" : ""}">Задача</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Валюта</label>
+      <div class="seg c3" id="gCur">
+        ${CURS.map(c => `<button type="button" data-c="${c}" class="${c===cur?"on":""}">${c}</button>`).join("")}
+      </div>
+      ${g && g.saved > 0 ? `<div class="help">При смене валюты накопленное пересчитается по курсу.</div>` : ""}
+    </div>
+    <div class="field">
+      <label>Сколько нужно (я должен / цель)</label>
+      <input type="text" inputmode="decimal" id="gTarget" placeholder="0" value="${g ? String(g.target) : ""}">
+    </div>
+    <div class="field">
+      <label>Уже внесено</label>
+      <input type="text" inputmode="decimal" id="gSaved" placeholder="0" value="${g && g.saved ? String(Math.round(g.saved*100)/100) : ""}">
+    </div>
+    <div class="field" id="gErr"></div>
+    <button class="btn btn-primary" id="gSave">${g ? "Сохранить" : "Добавить"}</button>
+    ${g && g.id !== "roman" ? `<button class="danger-link" id="gDel">Удалить</button>` : ""}`;
+
+  let type = g ? g.type : "debt", gcur = cur;
+  shGoal.querySelectorAll("#gType button").forEach(b => b.onclick = () => {
+    type = b.dataset.t;
+    shGoal.querySelectorAll("#gType button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  shGoal.querySelectorAll("#gCur button").forEach(b => b.onclick = () => {
+    gcur = b.dataset.c;
+    shGoal.querySelectorAll("#gCur button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  shGoal.querySelector("#gSave").onclick = () => {
+    const name = shGoal.querySelector("#gName").value.trim();
+    const target = parseNum(shGoal.querySelector("#gTarget").value);
+    const savedIn = parseNum(shGoal.querySelector("#gSaved").value) || 0;
+    const errEl = shGoal.querySelector("#gErr");
+    if(!name){ errEl.innerHTML = `<div class="err">Дай название.</div>`; return; }
+    if(target <= 0){ errEl.innerHTML = `<div class="err">Укажи сумму больше нуля.</div>`; return; }
+    if(g){
+      const oldCur = g.cur;
+      g.name = name; g.type = type; g.target = target; g.cur = gcur;
+      g.saved = shGoal.querySelector("#gSaved").value.trim() === "" && oldCur !== gcur
+        ? conv(g.saved, oldCur, gcur) : savedIn;
+    }else{
+      state.goals.push({ id: uid(), name, type, cur: gcur, target, saved: savedIn,
+        color: GOAL_COLORS[state.goals.length % GOAL_COLORS.length], createdAt: Date.now() });
+    }
+    shGoal.close(); render();
+  };
+  const del = shGoal.querySelector("#gDel");
+  if(del) del.onclick = () => {
+    if(confirm(`Удалить «${g.name}»? История операций сохранится.`)){
+      state.goals = state.goals.filter(x => x.id !== g.id);
+      shGoal.close(); render();
+    }
+  };
+  shGoal.showModal();
+}
+
+/* ─────────────── sheet: пополнить цель ──────────────────── */
+const shTopup = document.getElementById("shTopup");
+function openTopup(id){
+  const g = goalOf(id); if(!g) return;
+  shTopup.innerHTML = `
+    <div class="grab"></div>
+    <h3>Пополнить: ${esc(g.name)}</h3>
+    <div class="field">
+      <label>Сумма, ${g.cur} · осталось ${fmt(remaining(g), g.cur)}</label>
+      <input type="text" inputmode="decimal" id="tAmt" placeholder="0">
+      <div class="help">Спишется с личного остатка (${fmt(state.personal, state.main)}).</div>
+    </div>
+    <div class="field" id="tErr"></div>
+    <button class="btn btn-primary" id="tSave">Внести</button>`;
+  shTopup.querySelector("#tSave").onclick = () => {
+    const a = Math.min(parseNum(shTopup.querySelector("#tAmt").value), remaining(g));
+    if(a <= 0){ shTopup.querySelector("#tErr").innerHTML = `<div class="err">Введи сумму.</div>`; return; }
+    const inMain = conv(a, g.cur, state.main);
+    g.saved += a;
+    state.personal -= inMain;
+    state.ops.push({ id: uid(), ts: Date.now(), type: "topup", goalId: g.id, amount: a, goalCur: g.cur, fromPersonal: inMain });
+    shTopup.close();
+    toast(g.saved >= g.target ? `🎉 ${esc(g.name)} — закрыто!` : "Внесено");
+    render();
+  };
+  shTopup.showModal();
+  setTimeout(() => shTopup.querySelector("#tAmt").focus(), 60);
+}
+
+/* ─────────────── sheet: расход ──────────────────────────── */
+const shExpense = document.getElementById("shExpense");
+function openExpense(){
+  shExpense.innerHTML = `
+    <div class="grab"></div>
+    <h3>Личный расход</h3>
+    <div class="field">
+      <label>Сумма, ${state.main}</label>
+      <input type="text" inputmode="decimal" id="eAmt" placeholder="0">
+    </div>
+    <div class="field">
+      <label>На что (необязательно)</label>
+      <input type="text" id="eNote" placeholder="Кофе, такси…">
+    </div>
+    <div class="field" id="eErr"></div>
+    <button class="btn btn-primary" id="eSave">Списать</button>`;
+  shExpense.querySelector("#eSave").onclick = () => {
+    const a = parseNum(shExpense.querySelector("#eAmt").value);
+    if(a <= 0){ shExpense.querySelector("#eErr").innerHTML = `<div class="err">Введи сумму.</div>`; return; }
+    state.personal -= a;
+    state.ops.push({ id: uid(), ts: Date.now(), type: "expense", amount: a, note: shExpense.querySelector("#eNote").value.trim() });
+    shExpense.close(); render();
+  };
+  shExpense.showModal();
+  setTimeout(() => shExpense.querySelector("#eAmt").focus(), 60);
+}
+
+/* ─────────────── sheet: бюджет ──────────────────────────── */
+const shBudget = document.getElementById("shBudget");
+function openBudget(){
+  shBudget.innerHTML = `
+    <div class="grab"></div>
+    <h3>Бюджет на месяц</h3>
+    <div class="field">
+      <label>Сумма, ${state.main}</label>
+      <input type="text" inputmode="decimal" id="bAmt" value="${state.budget || ""}" placeholder="0">
+      <div class="help">Просто ориентир — сколько планируешь тратить на жизнь.</div>
+    </div>
+    <button class="btn btn-primary" id="bSave">Сохранить</button>`;
+  shBudget.querySelector("#bSave").onclick = () => {
+    state.budget = parseNum(shBudget.querySelector("#bAmt").value) || 0;
+    shBudget.close(); render();
+  };
+  shBudget.showModal();
+  setTimeout(() => shBudget.querySelector("#bAmt").focus(), 60);
+}
+
+/* ─────────────── sheet: настройки ───────────────────────── */
+const shSettings = document.getElementById("shSettings");
+function openSettings(){
+  shSettings.innerHTML = `
+    <div class="grab"></div>
+    <h3>Настройки</h3>
+    <div class="field">
+      <label>Основная валюта (личные, бюджет)</label>
+      <div class="seg c3" id="sMain">
+        ${CURS.map(c => `<button type="button" data-c="${c}" class="${c===state.main?"on":""}">${c}</button>`).join("")}
+      </div>
+      <div class="help">Личный остаток пересчитается по курсу.</div>
+    </div>
+    <div class="field">
+      <label>Курсы (за 1 USDT)</label>
+      <div class="rates-grid">
+        <div>
+          <input type="text" inputmode="decimal" id="rTHB" value="${state.rates.THB}">
+          <div class="help">THB за 1 USDT</div>
+        </div>
+        <div>
+          <input type="text" inputmode="decimal" id="rRUB" value="${state.rates.RUB}">
+          <div class="help">RUB за 1 USDT</div>
+        </div>
+      </div>
+    </div>
+    <div class="field" id="sErr"></div>
+    <button class="btn btn-primary" id="sSave">Сохранить</button>
+    <button class="danger-link" id="sReset">Сбросить все данные</button>`;
+  let main = state.main;
+  shSettings.querySelectorAll("#sMain button").forEach(b => b.onclick = () => {
+    main = b.dataset.c;
+    shSettings.querySelectorAll("#sMain button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  shSettings.querySelector("#sSave").onclick = () => {
+    const thb = parseNum(shSettings.querySelector("#rTHB").value);
+    const rub = parseNum(shSettings.querySelector("#rRUB").value);
+    if(thb <= 0 || rub <= 0){ shSettings.querySelector("#sErr").innerHTML = `<div class="err">Курсы должны быть больше нуля.</div>`; return; }
+    state.rates.THB = thb; state.rates.RUB = rub;
+    if(main !== state.main){
+      state.personal = conv(state.personal, state.main, main);
+      state.budget = conv(state.budget, state.main, main);
+      state.main = main;
+    }
+    shSettings.close(); render();
+  };
+  shSettings.querySelector("#sReset").onclick = () => {
+    if(confirm("Точно стереть всё? Это необратимо.")){
+      localStorage.removeItem(LS_KEY);
+      state = defaults();
+      shSettings.close(); render();
+    }
+  };
+  shSettings.showModal();
+}
+
+/* ─────────────── удаление операции (с откатом) ──────────── */
+function deleteOp(id){
+  const op = state.ops.find(o => o.id === id); if(!op) return;
+  if(!confirm("Удалить операцию и откатить её эффект?")) return;
+  if(op.type === "income"){
+    op.allocs.forEach(a => { const g = goalOf(a.goalId); if(g) g.saved = Math.max(0, g.saved - a.credited); });
+    state.personal -= op.personalAdded;
+  }else if(op.type === "expense"){
+    state.personal += op.amount;
+  }else if(op.type === "topup"){
+    const g = goalOf(op.goalId); if(g) g.saved = Math.max(0, g.saved - op.amount);
+    state.personal += op.fromPersonal != null ? op.fromPersonal : conv(op.amount, op.goalCur, state.main);
+  }
+  state.ops = state.ops.filter(o => o.id !== id);
+  render();
+}
+
+/* ─────────────── toast + закрытие sheet по фону ─────────── */
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.innerHTML = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+document.querySelectorAll("dialog.sheet").forEach(d => {
+  d.addEventListener("click", e => { if(e.target === d) d.close(); });
+});
+
+/* ─────────────── события / запуск ───────────────────────── */
+document.getElementById("btnIncome").onclick = openIncome;
+document.getElementById("btnExpense").onclick = openExpense;
+document.getElementById("btnAddGoal").onclick = () => openGoal(null);
+document.getElementById("btnSettings").onclick = openSettings;
+
+render();
+
+if("serviceWorker" in navigator && location.protocol !== "file:"){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
