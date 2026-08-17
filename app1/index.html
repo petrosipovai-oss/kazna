@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f3f5">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Мои пари">
+<title>Мои пари</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800;900&family=Golos+Text:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f2f3f5;
+    --card:#ffffff;
+    --ink:#2b3252;
+    --ink-soft:#8a90a5;
+    --green:#9ab825;
+    --green-dark:#8aa81e;
+    --red:#e05a4e;
+    --score-bg:#f4f6ec;
+    --line:#e8e9ee;
+    --navy:#2b3252;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:'Onest','Golos Text',-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    max-width:520px;
+    margin:0 auto;
+    padding-bottom:90px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Header ── */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:var(--bg);
+    padding:12px 14px 9px;
+    border-bottom:1px solid var(--line);
+  }
+  .tabs{display:flex;align-items:center;gap:18px}
+  .tab{font-size:21px;font-weight:800;color:#b9bdcc;letter-spacing:.2px;cursor:pointer}
+  .tab.active{color:var(--ink)}
+  .tabs .spacer{flex:1}
+  .icon-btn{width:30px;height:22px;border:none;background:none;cursor:pointer;color:#9aa0b4}
+  .icon-btn svg{width:22px;height:22px}
+
+  .balance-row{display:flex;gap:7px;margin:10px 0 0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .balance-row::-webkit-scrollbar{display:none}
+  .chip{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:5px 11px;
+    font-size:13.5px;font-weight:700;color:var(--ink);
+    cursor:pointer;flex:none;
+  }
+  .chip.add{font-weight:600;color:var(--ink);padding:5px 10px}
+  .fchip{
+    flex:none;padding:5px 11px;border-radius:7px;
+    background:var(--card);border:1px solid var(--line);
+    font-size:11.5px;font-weight:800;letter-spacing:.3px;color:#6a7089;
+    display:flex;align-items:center;cursor:pointer;
+  }
+  .fchip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* ── Cards ── */
+  main{padding:10px 10px 0}
+  .empty{
+    text-align:center;color:var(--ink-soft);
+    padding:60px 30px;font-size:15px;line-height:1.5;
+  }
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    padding:11px 13px 13px;
+    margin-bottom:10px;
+    box-shadow:0 1px 2px rgba(43,50,82,.04);
+  }
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between}
+  .status-line{font-size:14px}
+  .status{font-weight:800}
+  .status.win{color:var(--green)}
+  .status.loss{color:var(--red)}
+  .status.ret{color:#8a90a5}
+  .bet-type{color:#9aa0b4;font-weight:500;margin-left:4px}
+  .meta{margin-top:4px;font-size:11.5px;color:#9aa0b4;display:flex;gap:10px}
+  .meta b{color:#6a7089;font-weight:700}
+  .qmark{
+    width:36px;height:36px;flex:none;
+    border:1px solid var(--line);border-radius:10px;
+    background:var(--card);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .qmark span{
+    width:19px;height:19px;border-radius:50%;
+    background:var(--navy);color:#fff;
+    font-size:11px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .market{font-size:16px;font-weight:800;margin-top:9px;letter-spacing:.2px}
+  .match{font-size:13px;color:#5d6378;margin-top:4px}
+  .score-row{display:flex;align-items:center;gap:9px;margin-top:9px}
+  .score-bar{
+    flex:1;background:var(--score-bg);
+    border-radius:7px;padding:7px 10px;
+    text-align:center;font-size:11.5px;
+  }
+  .score-bar .lbl{color:#9aa0b4;font-weight:600;letter-spacing:.5px;margin-right:7px}
+  .score-bar .val{color:var(--green-dark);font-weight:800;font-size:12.5px}
+  .sport-ico{font-size:18px;line-height:1;flex:none;display:flex;align-items:center}
+  .card-bottom{display:flex;align-items:baseline;justify-content:space-between;margin-top:11px}
+  .money{font-size:15px;font-weight:800}
+  .money .stake{color:#9aa0b4}
+  .money .arrow{color:#9aa0b4;font-weight:600;margin:0 5px}
+  .money .win-amt{color:var(--green)}
+  .money .loss-amt{color:var(--red)}
+  .money .ret-amt{color:#9aa0b4}
+  .money .pot-amt{color:#9aa0b4}
+  .money .sold-amt{color:var(--navy)}
+  .status.pend{color:var(--navy)}
+  .status.sold{color:#8a90a5}
+  .score-bar .val .old{color:#9aa0b4}
+  .score-bar.pend{background:#f0f1f4}
+  .score-bar .start{color:#9aa0b4;font-weight:600;font-size:12.5px}
+  .font-opt{
+    display:block;width:100%;padding:13px 14px;margin-bottom:8px;
+    border:1px solid var(--line);border-radius:10px;background:#fafbfc;
+    font-size:16px;font-weight:700;color:var(--ink);cursor:pointer;text-align:left;
+  }
+  .font-opt.on{border-color:var(--navy);background:#eef0f6}
+  .font-opt small{display:block;font-size:12px;font-weight:500;color:#9aa0b4;margin-top:2px}
+  .money .stake.dark{color:var(--ink)}
+  .card.has-sell{padding-bottom:0;overflow:hidden}
+  .sell-btn{
+    display:block;width:calc(100% + 26px);
+    margin:13px -13px 0;
+    border:none;cursor:pointer;
+    background:var(--navy);color:#fff;
+    padding:13px 0;font-size:15px;font-weight:700;
+    border-radius:0 0 12px 12px;
+  }
+  .odds{font-size:15px;font-weight:800;color:var(--ink)}
+
+  /* ── FAB / bottom nav ── */
+  nav{
+    --nav-bg:#f9fafb;
+    position:fixed;bottom:0;left:0;right:0;z-index:20;
+    max-width:520px;margin:0 auto;
+    background:var(--nav-bg);
+    backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    display:flex;
+    padding:8px 4px calc(10px + env(safe-area-inset-bottom));
+  }
+  .nav-item{
+    position:relative;
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:10px;color:#9aa0b4;border:none;background:none;cursor:pointer;
+  }
+  .nav-item svg{width:22px;height:22px}
+  .nav-item .fil{fill:#9aa0b4;stroke:none}
+  .nav-item .stk{fill:none;stroke:#9aa0b4}
+  .nav-item.active{color:var(--navy);font-weight:600}
+  .nav-item.active .fil{fill:var(--navy)}
+  .nav-item.active .stk{stroke:var(--navy)}
+  .nav-item.badge::after{
+    content:'';position:absolute;top:-2px;right:14px;
+    width:7px;height:7px;border-radius:50%;background:#2f6bff;
+  }
+
+  /* ── Sheet (форма) ── */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,24,45,.45);
+    z-index:40;opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .overlay.open{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    max-width:520px;margin:0 auto;
+    background:#fff;border-radius:18px 18px 0 0;
+    padding:18px 18px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(105%);transition:transform .25s ease;
+    max-height:88vh;overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0)}
+  .sheet h2{font-size:20px;font-weight:800;margin-bottom:14px}
+  .fld{margin-bottom:12px}
+  .fld label{display:block;font-size:13px;font-weight:600;color:#8a90a5;margin-bottom:5px}
+  .fld input,.fld select{
+    width:100%;font-size:16px;padding:11px 12px;
+    border:1px solid var(--line);border-radius:10px;
+    background:#fafbfc;color:var(--ink);font-weight:600;
+    appearance:none;outline:none;
+  }
+  .fld input:focus,.fld select:focus{border-color:var(--navy)}
+  .row2{display:flex;gap:10px}
+  .row2 .fld{flex:1}
+  .seg{display:flex;gap:6px;margin-bottom:14px}
+  .seg button{
+    flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);
+    background:#fafbfc;font-size:12.5px;font-weight:700;color:#8a90a5;cursor:pointer;
+  }
+  .seg button.on-win{background:#f4f8e4;border-color:var(--green);color:var(--green-dark)}
+  .seg button.on-loss{background:#fdeeec;border-color:var(--red);color:var(--red)}
+  .seg button.on-ret{background:#eef0f4;border-color:#9aa0b4;color:#6a7089}
+  .seg button.on-pend{background:#eef0f6;border-color:var(--navy);color:var(--navy)}
+  .calc-hint{font-size:13px;color:#9aa0b4;margin:-4px 0 12px}
+  .calc-hint b{color:var(--green-dark)}
+  .btn-main{
+    width:100%;padding:14px 0;border:none;border-radius:12px;
+    background:var(--navy);color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+  }
+  .btn-danger{
+    width:100%;padding:13px 0;border:none;border-radius:12px;margin-top:10px;
+    background:#fdeeec;color:var(--red);font-size:15px;font-weight:700;cursor:pointer;
+  }
+  .btn-ghost{
+    width:100%;padding:13px 0;border:none;border-radius:12px;margin-top:10px;
+    background:#f1f2f6;color:#6a7089;font-size:15px;font-weight:700;cursor:pointer;
+  }
+
+  /* summary in detail sheet */
+  .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .sum-cell{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .sum-cell .k{font-size:12px;color:#9aa0b4;font-weight:600}
+  .sum-cell .v{font-size:16px;font-weight:800;margin-top:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tabs">
+    <div class="tab active" id="tabHistory">История</div>
+    <div class="tab" id="tabStats">Статистика</div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="fontBtn" title="Шрифт">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#9aa0b4" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="5" width="18" height="6" rx="3"/><circle cx="7" cy="8" r="1.6" fill="#9aa0b4"/>
+        <rect x="3" y="13" width="18" height="6" rx="3"/><circle cx="17" cy="16" r="1.6" fill="#9aa0b4"/>
+      </svg>
+    </button>
+  </div>
+  <div class="balance-row">
+    <div class="chip" id="balanceChip" title="Нажмите, чтобы изменить баланс">Баланс: 0</div>
+    <div class="chip add" id="addBtn">+</div>
+    <div class="fchip on" data-f="all">ВСЕ</div>
+    <div class="fchip" data-f="pend">В ИГРЕ</div>
+    <div class="fchip" data-f="sell">НА ПРОДАЖУ</div>
+    <div class="fchip" data-f="done">РАСЧЕТ</div>
+  </div>
+</header>
+
+<main id="list"></main>
+
+<nav>
+  <button class="nav-item">
+    <svg viewBox="0 0 24 24">
+      <path class="fil" d="M13.5 3.2c-.1 1.8-1.4 2.9-2.8 4.2-1.6 1.5-3.2 3.1-3.2 5.5a4.9 4.9 0 0 0 9.8 0c0-2.3-1.4-3.9-2.7-5.4-1.1-1.2-1.2-2.7-1.1-4.3z"/>
+      <path d="M7.9 16.9 10.6 12.4" stroke="var(--nav-bg,#fff)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    </svg>Топ
+  </button>
+  <button class="nav-item">
+    <svg viewBox="0 0 24 24">
+      <circle class="stk" cx="12" cy="12" r="7" stroke-width="3.4"/>
+      <circle class="fil" cx="12" cy="12" r="1.8"/>
+    </svg>Спорт
+  </button>
+  <button class="nav-item active">
+    <svg viewBox="0 0 24 24">
+      <rect class="fil" x="4.2" y="8.6" width="4.9" height="6.8" rx="2.1"/>
+      <rect class="fil" x="10.3" y="6.5" width="9.8" height="11" rx="3.1"/>
+    </svg>Мои пари
+  </button>
+  <button class="nav-item">
+    <svg viewBox="0 0 24 24">
+      <circle class="stk" cx="12" cy="12" r="7.7" stroke-width="2.8"/>
+      <path class="fil" d="M13.4 6.9 9.2 12.7h2.8l-1.3 4.4 4.3-5.8h-2.9z"/>
+    </svg>Игры 24/7
+  </button>
+  <button class="nav-item badge">
+    <svg viewBox="0 0 24 24">
+      <clipPath id="pClip"><circle cx="12" cy="12" r="9"/></clipPath>
+      <circle class="fil" cx="12" cy="12" r="9"/>
+      <g clip-path="url(#pClip)" fill="var(--nav-bg,#fff)">
+        <circle cx="12" cy="9.8" r="2.7"/>
+        <ellipse cx="12" cy="19.4" rx="6.3" ry="5"/>
+      </g>
+    </svg>Профиль
+  </button>
+</nav>
+
+<!-- Форма добавления / редактирования -->
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="formSheet">
+  <h2 id="formTitle">Новое пари</h2>
+  <button class="btn-ghost" id="scanBtn" style="margin:0 0 14px;background:#f4f8e4;color:#8aa81e">📷 Заполнить со скрина матча</button>
+  <div class="seg" id="statusSeg">
+    <button data-s="pend">Принято</button>
+    <button data-s="win" class="on-win">Выигрыш</button>
+    <button data-s="loss">Проигрыш</button>
+    <button data-s="ret">Возврат</button>
+  </div>
+  <div class="fld" id="sellFld" style="display:none">
+    <label>Сумма продажи (пусто = авто 95%)</label>
+    <input id="fSell" type="number" inputmode="numeric" placeholder="авто">
+  </div>
+  <div class="fld">
+    <label>Ставка (маркет)</label>
+    <input id="fMarket" placeholder="Напр.: < 2.5 или Фора 2 (-3.5)">
+  </div>
+  <div class="fld">
+    <label>Матч</label>
+    <input id="fMatch" placeholder="Напр.: ПАОК – Динамо Киев">
+  </div>
+  <div class="row2">
+    <div class="fld">
+      <label>Счёт</label>
+      <input id="fScore" placeholder="2:0">
+    </div>
+    <div class="fld">
+      <label>Спорт</label>
+      <select id="fSport">
+        <option value="⚽️">⚽️ Футбол</option>
+        <option value="🏀">🏀 Баскетбол</option>
+        <option value="🎾">🎾 Теннис</option>
+        <option value="🏒">🏒 Хоккей</option>
+        <option value="🏐">🏐 Волейбол</option>
+        <option value="🥊">🥊 ММА / Бокс</option>
+        <option value="🏓">🏓 Наст. теннис</option>
+        <option value="🎮">🎮 Киберспорт</option>
+      </select>
+    </div>
+  </div>
+  <div class="fld" id="startFld">
+    <label>Начало матча (для «Принято»)</label>
+    <input id="fStart" type="datetime-local">
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px;font-size:14px;font-weight:600">
+    <input type="checkbox" id="fLive" style="width:18px;height:18px;accent-color:#2b3252">
+    <label for="fLive">Ставка в LIVE</label>
+  </div>
+  <div class="fld" id="scoreAtFld" style="display:none">
+    <label>Счёт на момент ставки</label>
+    <input id="fScoreAt" placeholder="1:3">
+  </div>
+  <div class="row2">
+    <div class="fld">
+      <label>Сумма ставки</label>
+      <input id="fStake" type="number" inputmode="numeric" placeholder="3000000">
+    </div>
+    <div class="fld">
+      <label>Коэффициент</label>
+      <input id="fOdds" type="number" inputmode="decimal" step="0.01" placeholder="2.20">
+    </div>
+  </div>
+  <div class="calc-hint" id="calcHint"></div>
+  <div class="row2">
+    <div class="fld">
+      <label>Дата</label>
+      <input id="fDate" type="date">
+    </div>
+    <div class="fld">
+      <label>Время</label>
+      <input id="fTime" type="time" step="1">
+    </div>
+  </div>
+  <div class="fld">
+    <label>Тип</label>
+    <select id="fType">
+      <option>Одинар</option>
+      <option>Экспресс</option>
+      <option>Система</option>
+    </select>
+  </div>
+  <button class="btn-main" id="saveBtn">Сохранить</button>
+  <button class="btn-danger" id="deleteBtn" style="display:none">Удалить пари</button>
+  <button class="btn-ghost" id="cancelBtn">Отмена</button>
+</div>
+
+<!-- Статистика -->
+<div class="sheet" id="statsSheet">
+  <h2>Статистика</h2>
+  <div class="sum-grid" id="statsGrid"></div>
+  <button class="btn-ghost" id="statsClose">Закрыть</button>
+</div>
+
+<!-- Шрифт -->
+<div class="sheet" id="fontSheet">
+  <h2>Шрифт приложения</h2>
+  <div id="fontList"></div>
+  <button class="btn-ghost" id="fontClose">Закрыть</button>
+</div>
+
+<script>
+if(!window.storage){
+  window.storage={
+    async get(k){const v=localStorage.getItem(k);if(v===null)throw 0;return{key:k,value:v}},
+    async set(k,v){localStorage.setItem(k,v);return{key:k,value:v}},
+    async delete(k){localStorage.removeItem(k);return{key:k,deleted:true}},
+    async list(p){return{keys:Object.keys(localStorage).filter(x=>!p||x.startsWith(p))}}
+  };
+}
+</script>
+<script>
+(function(){
+  const KEY='bets-v1', BAL_KEY='balance-v1';
+  let bets=[], balance=0, editId=null, curStatus='win', filter='all';
+  let memBets=null, memBal=null; // fallback, если хранилище недоступно
+
+  const fmt=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'\u00A0');
+
+  async function load(){
+    try{
+      const b=await window.storage.get(KEY);
+      bets=b?JSON.parse(b.value):[];
+    }catch(e){ bets=memBets||[]; }
+    try{
+      const v=await window.storage.get(BAL_KEY);
+      balance=v?parseFloat(v.value):0;
+    }catch(e){ balance=memBal!==null?memBal:0; }
+    render();
+  }
+  async function save(){
+    memBets=bets; memBal=balance;
+    try{ await window.storage.set(KEY,JSON.stringify(bets)); }catch(e){}
+    try{ await window.storage.set(BAL_KEY,String(balance)); }catch(e){}
+  }
+
+  function payout(b){
+    if(b.status==='win')  return b.stake*b.odds;
+    if(b.status==='ret')  return b.stake;
+    if(b.status==='sold') return b.soldFor||0;
+    if(b.status==='pend') return b.stake*b.odds;   // потенциальный выигрыш
+    return 0;
+  }
+  function net(b){
+    if(b.status==='pend') return 0;                // ещё не рассчитано
+    return payout(b)-b.stake;
+  }
+  function sellSum(b){
+    if(b.sell>0) return b.sell;                    // ручная сумма продажи
+    return Math.round(b.stake*0.95);               // авто 95%
+  }
+
+  function statusText(s){
+    return s==='win'?'Выигрыш':s==='loss'?'Проигрыш':s==='ret'?'Возврат'
+          :s==='pend'?'Принято':s==='sold'?'Продано':'—';
+  }
+
+  function sportIcon(s){
+    if(s==='⚽️'||s==='⚽'){
+      return `<svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="9.5" fill="#63a03a"/><polygon points="12,8.4 14.5,10.2 13.5,13.1 10.5,13.1 9.5,10.2" fill="#fff"/><g stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"><path d="M12 8.4V5.6M14.5 10.2l2.7-.8M13.5 13.1l1.6 2.3M10.5 13.1l-1.6 2.3M9.5 10.2l-2.7-.8"/></g></svg>`;
+    }
+    if(s==='🎾'){
+      return `<svg viewBox="0 0 24 24" width="19" height="19"><circle cx="12" cy="12" r="9.5" fill="#f59a1d"/><path d="M4.6 6.2a9.5 9.5 0 0 1 0 11.6M19.4 6.2a9.5 9.5 0 0 0 0 11.6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+    }
+    return s;
+  }
+
+  function scoreHtml(b){
+    const s=b.score;
+    if(b.live&&b.scoreAt&&s)
+      return `<span class="old">${esc(b.scoreAt)}</span> → <span>${esc(s)}</span>`;
+    if(!s)return '—';
+    const p=s.split(/\s*(?:->|→)\s*/);
+    if(p.length===2)return `<span class="old">${esc(p[0])}</span> → <span>${esc(p[1])}</span>`;
+    return esc(s);
+  }
+
+  function fstart(v){
+    if(!v)return'—';
+    const[d,t]=v.split('T');
+    const[y,m,dd]=d.split('-');
+    return`${dd}.${m} ${t.slice(0,5)}`;
+  }
+
+  function render(){
+    document.getElementById('balanceChip').textContent='Баланс: '+fmt(balance);
+    const list=document.getElementById('list');
+    let items=[...bets];
+    if(filter==='pend'||filter==='sell')items=items.filter(b=>b.status==='pend');
+    else if(filter==='done')items=items.filter(b=>['win','loss','ret','sold'].includes(b.status));
+    if(!items.length){
+      const t=filter==='pend'||filter==='sell'?'Нет пари в игре':filter==='done'?'Нет рассчитанных пари':'Пока нет пари';
+      list.innerHTML=`<div class="empty">${t}.<br>Нажмите «+», чтобы добавить запись.</div>`;
+      return;
+    }
+    const sorted=items.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+    list.innerHTML=sorted.map(b=>{
+      const p=payout(b);
+      const amtCls=b.status==='win'?'win-amt':b.status==='ret'?'ret-amt'
+                  :b.status==='pend'?'pot-amt':b.status==='sold'?'sold-amt':'loss-amt';
+      const amtTxt=b.status==='loss'?'0':fmt(p);
+      const [y,m,d]=b.date.split('-');
+      const icon=b.status==='pend'
+        ?`<div class="qmark" data-edit="${b.id}"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3.6a5.2 5.2 0 0 0-5.2 5.2c0 3.8-1.5 5.1-1.5 5.1h13.4s-1.5-1.3-1.5-5.1A5.2 5.2 0 0 0 12 3.6z" fill="#2e63e0"/><path d="M10.2 16.6a1.9 1.9 0 0 0 3.6 0z" fill="#2e63e0"/></svg></div>`
+        :`<div class="qmark" data-edit="${b.id}"><span>?</span></div>`;
+      const scoreCell=b.status==='pend'
+        ?`<div class="score-bar pend"><span class="start">${fstart(b.start)}</span></div>`
+        :`<div class="score-bar"><span class="lbl">СЧЕТ</span><span class="val">${scoreHtml(b)}</span></div>`;
+      const sell=b.status==='pend'
+        ?`<button class="sell-btn" data-sell="${b.id}">Продать пари за ${fmt(sellSum(b))}</button>`
+        :'';
+      return `<div class="card${b.status==='pend'?' has-sell':''}" data-id="${b.id}">
+        <div class="card-top">
+          <div>
+            <div class="status-line"><span class="status ${b.status}">${statusText(b.status)}</span><span class="bet-type">${b.type}</span></div>
+            <div class="meta"><span><b>№</b> ${b.num}</span><span>${d}.${m}</span><span>${b.time}</span></div>
+          </div>
+          ${icon}
+        </div>
+        <div class="market">${esc(b.market)}</div>
+        <div class="match">${esc(b.match)}</div>
+        <div class="score-row">
+          ${scoreCell}
+          <div class="sport-ico">${sportIcon(b.sport)}</div>
+        </div>
+        <div class="card-bottom">
+          <div class="money"><span class="stake${b.status==='pend'?' dark':''}">${fmt(b.stake)}</span><span class="arrow">→</span><span class="${amtCls}">${amtTxt}</span></div>
+          <div class="odds">${b.odds.toFixed(2)}</div>
+        </div>
+        ${sell}
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-edit]').forEach(el=>{
+      el.addEventListener('click',()=>openForm(el.dataset.edit));
+    });
+    list.querySelectorAll('[data-sell]').forEach(el=>{
+      el.addEventListener('click',async ev=>{
+        ev.stopPropagation();
+        const b=bets.find(x=>x.id===el.dataset.sell);
+        const s=sellSum(b);
+        if(!confirm(`Продать пари за ${fmt(s)}?`))return;
+        balance-=net(b);
+        b.status='sold'; b.soldFor=s;
+        balance+=net(b);
+        await save(); render();
+      });
+    });
+  }
+
+  function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+
+  /* ── форма ── */
+  const ov=document.getElementById('overlay'),
+        sheet=document.getElementById('formSheet'),
+        statsSheet=document.getElementById('statsSheet');
+
+  function setStatus(s){
+    curStatus=s;
+    document.querySelectorAll('#statusSeg button').forEach(btn=>{
+      btn.className = btn.dataset.s===s ? ('on-'+s) : '';
+    });
+    hint();
+  }
+  document.querySelectorAll('#statusSeg button').forEach(btn=>{
+    btn.addEventListener('click',()=>setStatus(btn.dataset.s));
+  });
+
+  function hint(){
+    const st=parseFloat(document.getElementById('fStake').value)||0;
+    const od=parseFloat(document.getElementById('fOdds').value)||0;
+    const el=document.getElementById('calcHint');
+    document.getElementById('sellFld').style.display=curStatus==='pend'?'block':'none';
+    if(st&&od&&curStatus==='win') el.innerHTML='Выплата: <b>'+fmt(st*od)+'</b>';
+    else if(st&&od&&curStatus==='pend') el.innerHTML='Возможный выигрыш: <b>'+fmt(st*od)+'</b> · продажа ≈ '+fmt(st*0.95);
+    else if(st&&curStatus==='ret') el.innerHTML='Возврат: <b>'+fmt(st)+'</b>';
+    else if(st&&curStatus==='loss') el.innerHTML='Потеря: '+fmt(st);
+    else el.textContent='';
+  }
+  document.getElementById('fStake').addEventListener('input',hint);
+  document.getElementById('fOdds').addEventListener('input',hint);
+  document.getElementById('fLive').addEventListener('change',e=>{
+    document.getElementById('scoreAtFld').style.display=e.target.checked?'block':'none';
+  });
+
+  /* ── распознавание скрина матча ── */
+  function fileToJpeg(file){
+    return new Promise((res,rej)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1400,k=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');
+        c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL('image/jpeg',.85).split(',')[1]);
+      };
+      img.onerror=()=>rej(new Error('не удалось прочитать файл'));
+      img.src=URL.createObjectURL(file);
+    });
+  }
+
+  async function apiCall(body){
+    let key='';
+    try{const r=await window.storage.get('api-key');key=r.value;}catch(e){}
+    const mk=k=>{
+      const h={'Content-Type':'application/json'};
+      if(k){h['x-api-key']=k;h['anthropic-version']='2023-06-01';h['anthropic-dangerous-direct-browser-access']='true';}
+      return h;
+    };
+    let resp=await fetch('https://api.anthropic.com/v1/messages',
+      {method:'POST',headers:mk(key),body:JSON.stringify(body)});
+    if(resp.status===401||resp.status===403){
+      const k=prompt('Для распознавания нужен API-ключ Anthropic (console.anthropic.com).\nОн сохранится только на этом устройстве:');
+      if(!k)throw new Error('нет ключа');
+      try{await window.storage.set('api-key',k.trim());}catch(e){}
+      resp=await fetch('https://api.anthropic.com/v1/messages',
+        {method:'POST',headers:mk(k.trim()),body:JSON.stringify(body)});
+    }
+    if(!resp.ok)throw new Error('API '+resp.status);
+    return resp.json();
+  }
+
+  const SPORT_MAP={fb:'⚽️',bb:'🏀',tn:'🎾',hk:'🏒',vb:'🏐',mma:'🥊',tt:'🏓',cy:'🎮'};
+
+  async function scanBet(file){
+    const btn=document.getElementById('scanBtn');
+    const old=btn.textContent;
+    btn.textContent='… распознаю';btn.disabled=true;
+    try{
+      const b64=await fileToJpeg(file);
+      const market=document.getElementById('fMarket').value.trim();
+      const task=`Это скриншот спортивного матча (анонс до игры или результат после).
+Извлеки данные и верни ТОЛЬКО валидный JSON без пояснений и без markdown:
+{"match":"Команда1 – Команда2","score":"итоговый счёт или null","finished":true или false,"start":"YYYY-MM-DDTHH:MM или null","sport":"fb (футбол) | bb (баскетбол) | tn (теннис) | hk (хоккей) | vb (волейбол) | mma (ММА/бокс) | tt (наст. теннис) | cy (киберспорт)","status":null}
+Если год не указан на скрине, считай ${new Date().getFullYear()}.`+
+      (market?`\nМоя ставка (маркет): «${market}». Если матч завершён — определи по счёту, зашла ли ставка, и поставь status: "win", "loss" или "ret" (возврат).`:'');
+      const r=await apiCall({
+        model:'claude-sonnet-4-6',max_tokens:600,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:task}
+        ]}]
+      });
+      const txt=r.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+      const j=JSON.parse(txt.replace(/```json|```/g,'').trim());
+      if(j.match)document.getElementById('fMatch').value=j.match;
+      if(j.sport&&SPORT_MAP[j.sport])document.getElementById('fSport').value=SPORT_MAP[j.sport];
+      if(j.finished&&j.score)document.getElementById('fScore').value=j.score;
+      if(j.finished&&j.status)setStatus(j.status==='win'?'win':j.status==='ret'?'ret':'loss');
+      else if(!j.finished){
+        if(j.start)document.getElementById('fStart').value=j.start.slice(0,16);
+        setStatus('pend');
+      }
+    }catch(e){
+      alert('Не удалось распознать: '+(e.message||e));
+    }
+    btn.textContent=old;btn.disabled=false;
+  }
+
+  document.getElementById('scanBtn').addEventListener('click',()=>{
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';
+    inp.onchange=()=>{if(inp.files[0])scanBet(inp.files[0]);};
+    inp.click();
+  });
+
+  function openForm(id){
+    editId=id||null;
+    const b=id?bets.find(x=>x.id===id):null;
+    document.getElementById('formTitle').textContent=b?'Пари №'+b.num:'Новое пари';
+    document.getElementById('deleteBtn').style.display=b?'block':'none';
+    document.getElementById('fMarket').value=b?b.market:'';
+    document.getElementById('fMatch').value=b?b.match:'';
+    document.getElementById('fScore').value=b?b.score:'';
+    document.getElementById('fSport').value=b?b.sport:'⚽️';
+    document.getElementById('fStake').value=b?b.stake:'';
+    document.getElementById('fOdds').value=b?b.odds:'';
+    document.getElementById('fType').value=b?b.type:'Одинар';
+    document.getElementById('fSell').value=b&&b.sell?b.sell:'';
+    document.getElementById('fStart').value=b&&b.start?b.start:'';
+    document.getElementById('fLive').checked=b?!!b.live:false;
+    document.getElementById('fScoreAt').value=b&&b.scoreAt?b.scoreAt:'';
+    document.getElementById('scoreAtFld').style.display=(b&&b.live)?'block':'none';
+    const now=new Date();
+    document.getElementById('fDate').value=b?b.date:now.toISOString().slice(0,10);
+    document.getElementById('fTime').value=b?b.time:now.toTimeString().slice(0,8);
+    setStatus(b?b.status:'pend');
+    ov.classList.add('open'); sheet.classList.add('open');
+  }
+  function closeSheets(){
+    ov.classList.remove('open');
+    sheet.classList.remove('open');
+    statsSheet.classList.remove('open');
+    document.getElementById('fontSheet').classList.remove('open');
+  }
+  ov.addEventListener('click',closeSheets);
+  document.getElementById('cancelBtn').addEventListener('click',closeSheets);
+  document.getElementById('addBtn').addEventListener('click',()=>openForm(null));
+
+  document.getElementById('saveBtn').addEventListener('click',async()=>{
+    const stake=parseFloat(document.getElementById('fStake').value);
+    const odds=parseFloat(document.getElementById('fOdds').value);
+    if(!stake||!odds){alert('Укажите сумму и коэффициент');return;}
+    const data={
+      status:curStatus,
+      market:document.getElementById('fMarket').value.trim()||'—',
+      match:document.getElementById('fMatch').value.trim()||'—',
+      score:document.getElementById('fScore').value.trim(),
+      sport:document.getElementById('fSport').value,
+      stake, odds,
+      sell:parseFloat(document.getElementById('fSell').value)||0,
+      start:document.getElementById('fStart').value,
+      live:document.getElementById('fLive').checked,
+      scoreAt:document.getElementById('fScoreAt').value.trim(),
+      type:document.getElementById('fType').value,
+      date:document.getElementById('fDate').value,
+      time:document.getElementById('fTime').value
+    };
+    if(editId){
+      const i=bets.findIndex(x=>x.id===editId);
+      balance-=net(bets[i]);           // откатить старый результат
+      bets[i]={...bets[i],...data};
+      balance+=net(bets[i]);
+    }else{
+      const b={...data,
+        id:'b'+Date.now(),
+        num:String(12000000000+Math.floor(Math.random()*999999999))
+      };
+      bets.push(b);
+      balance+=net(b);
+    }
+    await save(); render(); closeSheets();
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click',async()=>{
+    if(!editId)return;
+    if(!confirm('Удалить это пари?'))return;
+    const i=bets.findIndex(x=>x.id===editId);
+    balance-=net(bets[i]);
+    bets.splice(i,1);
+    await save(); render(); closeSheets();
+  });
+
+  /* ── фильтры ── */
+  document.querySelectorAll('.fchip').forEach(f=>{
+    f.addEventListener('click',()=>{
+      filter=f.dataset.f;
+      document.querySelectorAll('.fchip').forEach(x=>x.classList.toggle('on',x===f));
+      render();
+    });
+  });
+
+  /* ── баланс вручную ── */
+  document.getElementById('balanceChip').addEventListener('click',async()=>{
+    const v=prompt('Текущий баланс:',Math.round(balance));
+    if(v===null)return;
+    const n=parseFloat(v.replace(/\s/g,''));
+    if(!isNaN(n)){balance=n;await save();render();}
+  });
+
+  /* ── статистика ── */
+  function openStats(){
+    const wins=bets.filter(b=>b.status==='win').length;
+    const losses=bets.filter(b=>b.status==='loss').length;
+    const rets=bets.filter(b=>b.status==='ret').length;
+    const staked=bets.reduce((s,b)=>s+b.stake,0);
+    const profit=bets.reduce((s,b)=>s+net(b),0);
+    const roi=staked?((profit/staked)*100).toFixed(1):'0';
+    const wr=(wins+losses)?((wins/(wins+losses))*100).toFixed(0):'0';
+    document.getElementById('statsGrid').innerHTML=`
+      <div class="sum-cell"><div class="k">Всего пари</div><div class="v">${bets.length}</div></div>
+      <div class="sum-cell"><div class="k">Winrate</div><div class="v">${wr}%</div></div>
+      <div class="sum-cell"><div class="k">Выигрышей</div><div class="v" style="color:var(--green)">${wins}</div></div>
+      <div class="sum-cell"><div class="k">Проигрышей</div><div class="v" style="color:var(--red)">${losses}</div></div>
+      <div class="sum-cell"><div class="k">Возвратов</div><div class="v">${rets}</div></div>
+      <div class="sum-cell"><div class="k">Оборот</div><div class="v">${fmt(staked)}</div></div>
+      <div class="sum-cell"><div class="k">Прибыль</div><div class="v" style="color:${profit>=0?'var(--green)':'var(--red)'}">${profit>=0?'+':''}${fmt(profit)}</div></div>
+      <div class="sum-cell"><div class="k">ROI</div><div class="v">${roi}%</div></div>`;
+    ov.classList.add('open'); statsSheet.classList.add('open');
+  }
+  document.getElementById('tabStats').addEventListener('click',openStats);
+  document.getElementById('statsClose').addEventListener('click',closeSheets);
+  document.getElementById('tabHistory').addEventListener('click',closeSheets);
+
+  /* ── выбор шрифта ── */
+  const FONT_FB="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Arial,sans-serif";
+  const FONTS=[
+    ["Onest","'Onest'","круглый, широкий — ближе всего"],
+    ["Golos Text","'Golos Text'","нейтральный, под кириллицу"],
+    ["Manrope","'Manrope'","мягкий, современный"],
+    ["Rubik","'Rubik'","со скруглёнными углами"],
+    ["Системный","", "SF Pro — как в iOS"]
+  ];
+  let curFont="'Onest'";
+  function applyFont(f){
+    curFont=f;
+    document.body.style.fontFamily=f?f+','+FONT_FB:FONT_FB;
+    buildFontList();
+  }
+  function buildFontList(){
+    const box=document.getElementById('fontList');
+    box.innerHTML=FONTS.map(([name,fam,note])=>
+      `<button class="font-opt${fam===curFont?' on':''}" data-f="${fam}" style="font-family:${fam?fam+','+FONT_FB:FONT_FB}">${name}<small>${note} · Пример: Выигрыш 3 000 000 → 2.20</small></button>`
+    ).join('');
+    box.querySelectorAll('.font-opt').forEach(btn=>{
+      btn.onclick=async()=>{
+        applyFont(btn.dataset.f);
+        try{await window.storage.set('font-v1',btn.dataset.f);}catch(e){}
+      };
+    });
+  }
+  async function loadFont(){
+    try{const r=await window.storage.get('font-v1');applyFont(r.value);}
+    catch(e){applyFont(curFont);}
+  }
+  const fontSheet=document.getElementById('fontSheet');
+  document.getElementById('fontBtn').addEventListener('click',()=>{
+    buildFontList();
+    ov.classList.add('open');fontSheet.classList.add('open');
+  });
+  document.getElementById('fontClose').addEventListener('click',closeSheets);
+
+  load();
+  loadFont();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
